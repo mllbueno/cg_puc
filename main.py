@@ -1,4 +1,21 @@
 import tkinter as tk
+from typing import List
+
+
+class Point:
+    def __init__(self, x=-1, y=-1):
+        self.x = x
+        self.y = y
+
+    def __str__(self):
+        return f'({self.x}, {self.y})'
+
+    def clear(self):
+        self.x = -1
+        self.y = -1
+
+    def has_point(self) -> bool:
+        return self.x != -1 and self.y != -1
 
 
 class PointSelector:
@@ -16,9 +33,9 @@ class PointSelector:
         self.canvas.grid(row=0, column=0, columnspan=3)
 
         # Define initial variables
-        self.points = []
-        self.initial_point = -1
-        self.final_point = -1
+        self.points: List[Point] = []
+        self.initial_point: Point
+        self.final_point: Point
 
         # Slider and Apply Btn for Translation X
         tk.Label(root, text="X Translation").grid(row=1, column=0)
@@ -49,31 +66,68 @@ class PointSelector:
     # Handle user click on interface
     def on_click(self, event):
         x, y = event.x, event.y
-        # Check if canvas is clean
-        if len(self.points) == 0:
-            self.initial_point = {x, y}
-            self.points.append({x, y})
-            self.plot_point(x, y)
-        # Check if canvas is waiting for final point to be defined
-        elif len(self.points) == 1 and self.final_point == -1:
-            self.final_point = {x, y}
-            self.plot_point(x, y)
 
-    def plot_point(self, x, y, color='red'):
-        self.canvas.create_oval(x - 5, y - 5, x + 5, y + 5, fill=color)
+        # Check if canvas is clean
+        if len(self.points) >= 2:
+            return
+
+        # Check if canvas is waiting for first point to be defined
+        if len(self.points) == 0:
+            point = Point(x, y)
+            self.initial_point = point
+            # add initial point in array and plot it
+            self.points.append(point)
+            self.plot_point(point)
+
+        # Check if canvas is waiting for final point to be defined
+        elif len(self.points) == 1:
+            point = Point(x, y)
+            self.final_point = point
+            # add final point in array and plot it
+            self.points.append(point)
+            self.plot_point(point)
+
+    def plot_point(self, point: Point, color='red'):
+        self.canvas.create_oval(point.x - 5, point.y - 5, point.x + 5, point.y + 5, fill=color)
 
     def rotate_point(self, x, y, angle):
         return
 
     def clear_points(self):
         self.points = []
-        self.initial_point = -1
-        self.final_point = -1
-        self.canvas.delete("all")  # Clear canvas
+        self.initial_point = None
+        self.final_point = None
+        self.clear_canvas()
+
+    def clear_canvas(self):
+        self.canvas.delete("all")
+
+    def print_points(self):
+        str_points = "[ "
+        for point in self.points:
+            str_points += str(point)
+            str_points += " "
+        str_points += "]"
+        print(str_points)
 
     def apply_x_translation(self):
-        print(self.x_translation.get())
-        pass
+        if self.initial_point == -1 or self.final_point == -1:
+            print("points to define")
+            return
+
+        factor = self.x_translation.get()
+
+        print("FACTOR: " + str(factor))
+        print(self.print_points())
+
+        if factor != 0:
+            # Clear previous points
+            self.clear_canvas()
+            for point in self.points:
+                point.x += self.x_translation.get()
+                self.plot_point(point)
+
+            print(self.print_points())
 
     def apply_y_translation(self):
         print(self.y_translation.get())
