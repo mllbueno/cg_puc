@@ -17,6 +17,13 @@ class Point:
     def has_point(self) -> bool:
         return self.x != -1 and self.y != -1
 
+    def move_translation(self, x_factor, y_factor):
+        self.x += x_factor
+        self.y += y_factor
+
+
+canvas_size = 400
+
 
 class PointSelector:
     def __init__(self, root):
@@ -29,13 +36,15 @@ class PointSelector:
         self.rotation_angle = tk.DoubleVar()
 
         # Define canvas
-        self.canvas = tk.Canvas(root, width=400, height=400, bg="white")
+        self.canvas = tk.Canvas(root, width=canvas_size, height=canvas_size, bg="white")
         self.canvas.grid(row=0, column=0, columnspan=3)
 
         # Define initial variables
         self.points: List[Point] = []
         self.initial_point: Point
         self.final_point: Point
+
+        pivot = Point(int(canvas_size/2), int(canvas_size/2))
 
         # Slider and Apply Btn for Translation X
         tk.Label(root, text="X Translation").grid(row=1, column=0)
@@ -55,6 +64,8 @@ class PointSelector:
         tk.Label(root, text="Rotation Angle").grid(row=3, column=0)
         self.rotation_slider = tk.Scale(root, variable=self.rotation_angle, from_=-180, to=180, orient=tk.HORIZONTAL)
         self.rotation_slider.grid(row=3, column=1)
+        self.apply_rotation_btn = tk.Button(root, text="Apply", command=self.rotate_point)
+        self.apply_rotation_btn.grid(row=3, column=2, columnspan=1)
 
         # Button to clear all points
         self.clear_button = tk.Button(root, text="Clear Points", command=self.clear_points)
@@ -95,9 +106,6 @@ class PointSelector:
             return True
         return False
 
-    def rotate_point(self, x, y, angle):
-        return
-
     def clear_points(self):
         self.points = []
         self.initial_point = None
@@ -122,16 +130,16 @@ class PointSelector:
         factor = self.x_translation.get()
 
         print("FACTOR: " + str(factor))
-        print(self.print_points())
+        self.print_points()
 
         if factor != 0:
             # Clear previous points
             self.clear_canvas()
             for point in self.points:
-                point.x += factor
+                point.move_translation(factor, 0)
                 self.plot_point(point)
 
-            print(self.print_points())
+            self.print_points()
 
     def apply_y_translation(self):
         if not self.has_defined_points():
@@ -140,16 +148,32 @@ class PointSelector:
         factor = self.y_translation.get()
 
         print("FACTOR: " + str(factor))
-        print(self.print_points())
+        self.print_points()
 
         if factor != 0:
             # Clear previous points
             self.clear_canvas()
             for point in self.points:
-                point.y += factor
+                point.move_translation(0, factor)
                 self.plot_point(point)
 
-            print(self.print_points())
+            self.print_points()
+
+    def rotate_point(self):
+        if not self.has_defined_points():
+            return
+
+        # print('ROTATION:')
+        # angle = self.rotation_angle.get()
+        # print("ANGLE: " + str(angle))
+        # self.print_points()
+        #
+        # if angle != 0:
+        #     self.clear_canvas()
+        #     for point in self.points:
+        #         # apply rotation
+        #         print(point)
+        #     self.print_points()
 
 
 if __name__ == "__main__":
