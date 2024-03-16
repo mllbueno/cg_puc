@@ -90,6 +90,11 @@ class PointSelector:
     def plot_point(self, point: Point, color='red'):
         self.canvas.create_oval(point.x - 5, point.y - 5, point.x + 5, point.y + 5, fill=color)
 
+    def has_defined_points(self):
+        if len(self.points) >= 2:
+            return True
+        return False
+
     def rotate_point(self, x, y, angle):
         return
 
@@ -111,8 +116,7 @@ class PointSelector:
         print(str_points)
 
     def apply_x_translation(self):
-        if self.initial_point == -1 or self.final_point == -1:
-            print("points to define")
+        if not self.has_defined_points():
             return
 
         factor = self.x_translation.get()
@@ -124,14 +128,28 @@ class PointSelector:
             # Clear previous points
             self.clear_canvas()
             for point in self.points:
-                point.x += self.x_translation.get()
+                point.x += factor
                 self.plot_point(point)
 
             print(self.print_points())
 
     def apply_y_translation(self):
-        print(self.y_translation.get())
-        pass
+        if not self.has_defined_points():
+            return
+
+        factor = self.y_translation.get()
+
+        print("FACTOR: " + str(factor))
+        print(self.print_points())
+
+        if factor != 0:
+            # Clear previous points
+            self.clear_canvas()
+            for point in self.points:
+                point.y += factor
+                self.plot_point(point)
+
+            print(self.print_points())
 
 
 if __name__ == "__main__":
