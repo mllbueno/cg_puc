@@ -10,7 +10,7 @@ class Point:
         self.y = y
 
     def __str__(self):
-        return f'({self.x}, {self.y})'
+        return f'(x: {self.x}, y: {self.y})'
 
     def clear(self):
         self.x = -1
@@ -92,10 +92,13 @@ class PointSelector:
 
         # Apply DDA
         self.apply_dda_btn = tk.Button(root, text="Apply DDA", command=self.apply_DDA)
-        self.apply_dda_btn.grid(row=7, column=0, columnspan=2)
-        # Apply DDA
+        self.apply_dda_btn.grid(row=7, column=0, columnspan=1)
+        # Apply BRESENHAM
         self.apply_bres_btn = tk.Button(root, text="Apply Bres", command=self.apply_bres)
-        self.apply_bres_btn.grid(row=7, column=1, columnspan=2)
+        self.apply_bres_btn.grid(row=7, column=1, columnspan=1)
+        # Apply BRESENHAM
+        self.apply_circ_bres_btn = tk.Button(root, text="Apply Circ Bres", command=self.apply_circ_bres)
+        self.apply_circ_bres_btn.grid(row=7, column=2, columnspan=1)
 
         # User interaction with interface
         self.canvas.bind("<Button-1>", self.on_click)
@@ -248,7 +251,7 @@ class PointSelector:
         if scale != 0 and scale != 1 and scale != -1:
             self.clear_canvas()
             for point in self.points:
-                point.x_scale(scale if scale > 0 else 1/-scale)
+                point.x_scale(scale if scale > 0 else 1 / -scale)
                 self.plot_point(point)
 
             self.print_points()
@@ -289,7 +292,7 @@ class PointSelector:
         self.plot_point(point)
         self.points.append(point)
 
-        for step in range(1, steps+1):
+        for step in range(1, steps + 1):
             x += x_increment
             y += y_increment
             next_point = Point(round(x), round(y))
@@ -359,6 +362,51 @@ class PointSelector:
 
         print("BRESENHAM:")
         self.check_final_point()
+
+    def plot_circular_point(self, point, x, y):
+        self.plot_point(Point(point.x + x, point.y + y))
+        self.points.append(Point(point.x + x, point.y + y))
+        self.plot_point(Point(point.x - x, point.y + y))
+        self.points.append(Point(point.x - x, point.y + y))
+        self.plot_point(Point(point.x + x, point.y - y))
+        self.points.append(Point(point.x + x, point.y - y))
+        self.plot_point(Point(point.x - x, point.y - y))
+        self.points.append(Point(point.x - x, point.y - y))
+
+        self.plot_point(Point(point.x + y, point.y + x))
+        self.points.append(Point(point.x + y, point.y + x))
+        self.plot_point(Point(point.x - y, point.y + x))
+        self.points.append(Point(point.x - y, point.y + x))
+        self.plot_point(Point(point.x + y, point.y - x))
+        self.points.append(Point(point.x + y, point.y - x))
+        self.plot_point(Point(point.x - y, point.y - x))
+        self.points.append(Point(point.x - y, point.y - x))
+
+    def apply_circ_bres(self):
+        if not self.has_defined_points():
+            return
+
+        radius = (
+            int(round(math.sqrt(
+                (self.final_point.x - self.initial_point.x) ** 2 + (self.final_point.y - self.initial_point.y) ** 2)
+            )))
+
+        x = 0
+        y = radius
+        d = 3 - 2 * radius
+
+        self.points = []
+        self.clear_canvas()
+        self.plot_circular_point(self.initial_point, x, y)
+
+        while y >= x:
+            x += 1
+            if d > 0:
+                y += -1
+                d = d + 4 * (x - y) + 10
+            else:
+                d = d + 4 * x + 6
+            self.plot_circular_point(self.initial_point, x, y)
 
 
 if __name__ == "__main__":
