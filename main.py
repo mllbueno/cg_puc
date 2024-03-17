@@ -83,9 +83,16 @@ class PointSelector:
         self.apply_scale_btn = tk.Button(root, text="Apply", command=self.apply_scale)
         self.apply_scale_btn.grid(row=4, column=2, columnspan=1)
 
+        # Button to clear the line and preserve initial and final point
+        self.clear_line = tk.Button(root, text="Clear Line", command=self.clear_line)
+        self.clear_line.grid(row=6, column=0, columnspan=2)
         # Button to clear all points
         self.clear_button = tk.Button(root, text="Clear Canvas", command=self.clear_points)
-        self.clear_button.grid(row=5, column=0, columnspan=2)
+        self.clear_button.grid(row=6, column=1, columnspan=2)
+
+        # Apply DDA
+        self.apply_dda_btn = tk.Button(root, text="Apply DDA", command=self.apply_DDA)
+        self.apply_dda_btn.grid(row=7, column=0, columnspan=2)
 
         # User interaction with interface
         self.canvas.bind("<Button-1>", self.on_click)
@@ -130,6 +137,15 @@ class PointSelector:
 
     def clear_canvas(self):
         self.canvas.delete("all")
+
+    def clear_line(self):
+        if self.has_defined_points():
+            self.canvas.delete("all")
+            self.points = []
+            self.points.append(self.initial_point)
+            self.plot_point(self.initial_point)
+            self.points.append(self.final_point)
+            self.plot_point(self.final_point)
 
     def print_points(self):
         str_points = "[ "
@@ -233,6 +249,35 @@ class PointSelector:
                 self.plot_point(point)
 
             self.print_points()
+
+    def apply_DDA(self):
+        if not self.has_defined_points():
+            return
+
+        dx = self.final_point.x - self.initial_point.x
+        dy = self.final_point.y - self.initial_point.y
+
+        steps = abs(dx) if abs(dx) > abs(dy) else abs(dy)
+
+        x_increment = dx / steps
+        y_increment = dy / steps
+
+        self.clear_canvas()
+        self.points = []
+
+        x = self.initial_point.x
+        y = self.initial_point.y
+
+        point = Point(x, y)
+        self.plot_point(point)
+        self.points.append(point)
+
+        for step in range(1, steps+1):
+            x += x_increment
+            y += y_increment
+            next_point = Point(round(x), round(y))
+            self.plot_point(next_point)
+            self.points.append(next_point)
 
 
 if __name__ == "__main__":
