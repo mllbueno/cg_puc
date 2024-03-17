@@ -93,6 +93,9 @@ class PointSelector:
         # Apply DDA
         self.apply_dda_btn = tk.Button(root, text="Apply DDA", command=self.apply_DDA)
         self.apply_dda_btn.grid(row=7, column=0, columnspan=2)
+        # Apply DDA
+        self.apply_bres_btn = tk.Button(root, text="Apply Bres", command=self.apply_bres)
+        self.apply_bres_btn.grid(row=7, column=1, columnspan=2)
 
         # User interaction with interface
         self.canvas.bind("<Button-1>", self.on_click)
@@ -278,6 +281,64 @@ class PointSelector:
             next_point = Point(round(x), round(y))
             self.plot_point(next_point)
             self.points.append(next_point)
+
+    def apply_bres(self):
+        if not self.has_defined_points():
+            return
+
+        dx = self.final_point.x - self.initial_point.x
+        dy = self.final_point.y - self.initial_point.y
+
+        if dx >= 0:
+            x_increment = 1
+        else:
+            x_increment = -1
+            dx = -dx
+
+        if dy >= 0:
+            y_increment = 1
+        else:
+            y_increment = -1
+            dy = -dy
+
+        self.clear_canvas()
+        self.points = []
+
+        x = self.initial_point.x
+        y = self.initial_point.y
+
+        point = Point(x, y)
+        self.plot_point(point)
+        self.points.append(point)
+
+        if dx > dy:
+            p = 2 * dy - dx
+            const1 = 2 * dy
+            const2 = 2 * (dy - dx)
+            for i in range(dx):
+                x += x_increment
+                if p < 0:
+                    p += const1
+                else:
+                    y += y_increment
+                    p += const2
+                new_point = Point(x, y)
+                self.points.append(new_point)
+                self.plot_point(new_point)
+        else:
+            p = 2 * dx - dy
+            const1 = 2 * dx
+            const2 = 2 * (dx - dy)
+            for i in range(dy):
+                y += y_increment
+                if p < 0:
+                    p += const1
+                else:
+                    x += x_increment
+                    p += const2
+                new_point = Point(x, y)
+                self.points.append(new_point)
+                self.plot_point(new_point)
 
 
 if __name__ == "__main__":
