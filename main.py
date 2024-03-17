@@ -1,5 +1,7 @@
+import math
 import tkinter as tk
 from typing import List
+import copy
 
 
 class Point:
@@ -21,12 +23,17 @@ class Point:
         self.x += x_factor
         self.y += y_factor
 
+    def rotate(self, angle):
+        self.x = round(self.x * math.cos(angle) - self.y * math.sin(angle))
+        self.y = round(self.x * math.sin(angle) + self.y * math.cos(angle))
+
 
 canvas_size = 400
 
 
 class PointSelector:
     def __init__(self, root):
+
         self.root = root
         self.root.title("Canvas")
 
@@ -43,8 +50,6 @@ class PointSelector:
         self.points: List[Point] = []
         self.initial_point: Point
         self.final_point: Point
-
-        pivot = Point(int(canvas_size/2), int(canvas_size/2))
 
         # Slider and Apply Btn for Translation X
         tk.Label(root, text="X Translation").grid(row=1, column=0)
@@ -160,20 +165,47 @@ class PointSelector:
             self.print_points()
 
     def rotate_point(self):
+        def translate_to_origin(polygon):
+            centroid_x = sum(vertex.x for vertex in polygon) / len(polygon)
+            centroid_y = sum(vertex.y for vertex in polygon) / len(polygon)
+
+            translated_polygon = [Point(vertex.x - centroid_x, vertex.y - centroid_y) for vertex in polygon]
+
+            return translated_polygon, (centroid_x, centroid_y)
+
+        def rollback_translation(polygon, centroid_val):
+            # Rollback translation
+            rolled_back_polygon = [Point(vertex.x + centroid_val[0], vertex.y + centroid_val[1]) for vertex in polygon]
+
+            return rolled_back_polygon
+
         if not self.has_defined_points():
             return
 
-        # print('ROTATION:')
-        # angle = self.rotation_angle.get()
-        # print("ANGLE: " + str(angle))
-        # self.print_points()
-        #
-        # if angle != 0:
-        #     self.clear_canvas()
-        #     for point in self.points:
-        #         # apply rotation
-        #         print(point)
-        #     self.print_points()
+        print('ROTATION:')
+        angle = self.rotation_angle.get()
+
+        if angle == 0:
+            return
+
+        rot_angle_rad = angle * math.pi / 180.0
+        print("ANGLE: " + str(angle))
+        print(rot_angle_rad)
+        self.print_points()
+
+        # Translate to origin
+        new_points, centroid = translate_to_origin(copy.copy(self.points))
+
+        # Rotate points
+        for point in new_points:
+            point.rotate(rot_angle_rad)
+
+        # Return to correct position
+        self.points = rollback_translation(new_points, centroid)
+
+        self.clear_canvas()
+        for point in self.points:
+            self.plot_point(point)
 
 
 if __name__ == "__main__":
