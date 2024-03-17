@@ -27,6 +27,9 @@ class Point:
         self.x = round(self.x * math.cos(angle) - self.y * math.sin(angle))
         self.y = round(self.x * math.sin(angle) + self.y * math.cos(angle))
 
+    def x_scale(self, scale):
+        self.x *= scale
+
 
 canvas_size = 400
 
@@ -41,6 +44,7 @@ class PointSelector:
         self.x_translation = tk.DoubleVar()
         self.y_translation = tk.DoubleVar()
         self.rotation_angle = tk.DoubleVar()
+        self.scale_value = tk.DoubleVar()
 
         # Define canvas
         self.canvas = tk.Canvas(root, width=canvas_size, height=canvas_size, bg="white")
@@ -72,9 +76,16 @@ class PointSelector:
         self.apply_rotation_btn = tk.Button(root, text="Apply", command=self.rotate_point)
         self.apply_rotation_btn.grid(row=3, column=2, columnspan=1)
 
+        # Slider for Scale
+        tk.Label(root, text="Scale").grid(row=4, column=0)
+        self.scale_slider = tk.Scale(root, variable=self.scale_value, from_=-10, to=10, orient=tk.HORIZONTAL)
+        self.scale_slider.grid(row=4, column=1)
+        self.apply_scale_btn = tk.Button(root, text="Apply", command=self.apply_scale)
+        self.apply_scale_btn.grid(row=4, column=2, columnspan=1)
+
         # Button to clear all points
-        self.clear_button = tk.Button(root, text="Clear Points", command=self.clear_points)
-        self.clear_button.grid(row=4, column=0, columnspan=2)
+        self.clear_button = tk.Button(root, text="Clear Canvas", command=self.clear_points)
+        self.clear_button.grid(row=5, column=0, columnspan=2)
 
         # User interaction with interface
         self.canvas.bind("<Button-1>", self.on_click)
@@ -206,6 +217,22 @@ class PointSelector:
         self.clear_canvas()
         for point in self.points:
             self.plot_point(point)
+
+    def apply_scale(self):
+        if not self.has_defined_points():
+            return
+
+        scale = self.scale_value.get()
+        print("SCALE: " + str(scale))
+        self.print_points()
+
+        if scale != 0 and scale != 1 and scale != -1:
+            self.clear_canvas()
+            for point in self.points:
+                point.x_scale(scale if scale > 0 else 1/-scale)
+                self.plot_point(point)
+
+            self.print_points()
 
 
 if __name__ == "__main__":
