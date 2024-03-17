@@ -253,6 +253,20 @@ class PointSelector:
 
             self.print_points()
 
+    def check_final_point(self):
+        if self.final_point.x == self.points[len(self.points) - 1].x:
+            print("ok x")
+        else:
+            print("quase")
+            print(self.final_point.x)
+            print(self.points[len(self.points) - 1].x)
+        if self.final_point.y == self.points[len(self.points) - 1].y:
+            print("ok y")
+        else:
+            print("quase")
+            print(self.final_point.y)
+            print(self.points[len(self.points) - 1].y)
+
     def apply_DDA(self):
         if not self.has_defined_points():
             return
@@ -281,6 +295,9 @@ class PointSelector:
             next_point = Point(round(x), round(y))
             self.plot_point(next_point)
             self.points.append(next_point)
+
+        print("DDA:")
+        self.check_final_point()
 
     def apply_bres(self):
         if not self.has_defined_points():
@@ -339,6 +356,9 @@ class PointSelector:
                 new_point = Point(x, y)
                 self.points.append(new_point)
                 self.plot_point(new_point)
+
+        print("BRESENHAM:")
+        self.check_final_point()
 
 
 if __name__ == "__main__":
