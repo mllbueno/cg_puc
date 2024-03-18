@@ -148,6 +148,10 @@ class PointSelector:
         self.clear_window_button = tk.Button(root, text="Clear window", command=self.clear_window)
         self.clear_window_button.grid(row=8, column=1, columnspan=2)
 
+        # Apply Cohen-Sutherland
+        self.apply_cohen_btn = tk.Button(root, text="Apply Cohen-Sutherland", command=self.apply_cohen)
+        self.apply_cohen_btn.grid(row=9, column=0, columnspan=1)
+
         # User interaction with interface
         self.canvas.bind("<Button-1>", self.on_click)
 
@@ -163,7 +167,7 @@ class PointSelector:
             elif len(self.window.window_coordinates_points) == 1:
                 self.is_defining_window = False
                 self.window.define_coordinates(window_point)
-                self.handle_window_defined()
+                self.draw_window_coordinates()
 
             return
 
@@ -187,10 +191,9 @@ class PointSelector:
             self.points.append(point)
             self.plot_point(point)
 
-    def handle_window_defined(self):
+    def draw_window_coordinates(self):
         for coord in self.window.window_coordinates():
             self.plot_point(Point(coord[0], coord[1]), "blue")
-        return
 
     def define_window(self):
         self.is_defining_window = True
@@ -219,6 +222,7 @@ class PointSelector:
         self.initial_point = None
         self.final_point = None
         self.clear_canvas()
+        self.window.clear()
 
     def clear_canvas(self):
         self.canvas.delete("all")
@@ -349,23 +353,19 @@ class PointSelector:
             print(self.final_point.y)
             print(self.points[len(self.points) - 1].y)
 
-    def apply_DDA(self):
-        if not self.has_defined_points():
-            return
-
-        dx = self.final_point.x - self.initial_point.x
-        dy = self.final_point.y - self.initial_point.y
+    def draw_DDA_line(self, point1, point2):
+        dx = point2.x - point1.x
+        dy = point2.y - point1.y
 
         steps = abs(dx) if abs(dx) > abs(dy) else abs(dy)
 
         x_increment = dx / steps
         y_increment = dy / steps
 
-        self.clear_canvas()
         self.points = []
 
-        x = self.initial_point.x
-        y = self.initial_point.y
+        x = point1.x
+        y = point1.y
 
         point = Point(x, y)
         self.plot_point(point)
@@ -377,6 +377,13 @@ class PointSelector:
             next_point = Point(round(x), round(y))
             self.plot_point(next_point)
             self.points.append(next_point)
+
+    def apply_DDA(self):
+        if not self.has_defined_points():
+            return
+
+        self.clear_canvas()
+        self.draw_DDA_line(self.initial_point, self.final_point)
 
         print("DDA:")
         self.check_final_point()
@@ -486,6 +493,86 @@ class PointSelector:
             else:
                 d = d + 4 * x + 6
             self.plot_circular_point(self.initial_point, x, y)
+
+
+    def apply_cohen(self):
+        if not self.has_defined_points():
+            return
+        if not self.window.has_defined_coordinates():
+            return
+
+        def region_code(point: Point):
+            code = 0
+            # Left bit 0
+            if point.x < self.window.x_min:
+                code = code + 1
+            # Right bit 1
+            if point.x > self.window.x_max:
+                code = code + 2
+            # Bottom bit 2
+            if point.y < self.window.y_min:
+                code = code + 4
+            # Top bit 3
+            if point.y > self.window.y_max:
+                code = code + 8
+            return code
+
+        def cohen_sutherland_line_clip(point1: Point, point2: Point):
+            c1 = region_code(point1)
+            c2 = region_code(point2)
+    
+            while True:
+                # Both points are inside
+                if not (c1 | c2):
+                    return point1, point2
+                # Both points are outside
+                elif c1 & c2:
+                    return None, None
+                # At least one point is outside
+                else:
+                    if c1:
+                        outcode_checking = c1
+                    else:
+                        outcode_checking = c2
+    
+                    # Find the intersection point
+                    if outcode_checking & 8:        # Top
+                        x = point1.x + (point2.x - point1.x) * (self.window.y_max - point1.y) / (point2.y - point1.y)
+                        y = self.window.y_max
+                    elif outcode_checking & 4:      # Bottom
+                        x = point1.x + (point2.x - point1.x) * (self.window.y_min - point1.y) / (point2.y - point1.y)
+                        y = self.window.y_min
+                    elif outcode_checking & 2:      # Right
+                        y = point1.y + (point2.y - point1.y) * (self.window.x_max - point1.x) / (point2.x - point1.x)
+                        x = self.window.x_max
+                    else:                           # Left
+                        y = point1.y + (point2.y - point1.y) * (self.window.x_min - point1.x) / (point2.x - point1.x)
+                        x = self.window.x_min
+
+                    final_point = Point(round(x), round(y))
+                    # Update the point outside the window
+                    if outcode_checking == c1:
+                        point1 = final_point
+                        c1 = region_code(point1)
+                    else:
+                        point2 = final_point
+                        c2 = region_code(point2)
+
+        print("COHEN SUTHERLAND")
+        print(self.window.window_coordinates())
+        print("Before")
+        print(self.points[0], self.points[1])
+        res = cohen_sutherland_line_clip(point1=self.initial_point, point2=self.final_point)
+        print("After")
+        print(res[0], res[1])
+
+        self.clear_canvas()
+        self.draw_window_coordinates()
+
+        if res[0] is not None:
+            self.draw_DDA_line(res[0], res[1])
+
+        print("done")
 
 
 if __name__ == "__main__":
