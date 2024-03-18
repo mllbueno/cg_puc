@@ -34,6 +34,43 @@ class Point:
 canvas_size = 400
 
 
+class Window:
+    def __init__(self) -> None:
+        self.window_coordinates_points = []
+        self.x_min = None
+        self.x_max = None
+        self.y_min = None
+        self.y_max = None
+
+    def clear(self) -> None:
+        self.window_coordinates_points = []
+        self.x_min = None
+        self.x_max = None
+        self.y_min = None
+        self.y_max = None
+
+    def has_defined_coordinates(self):
+        if len(self.window_coordinates_points) == 2:
+            return True
+        return False
+
+    def define_coordinates(self, point: Point) -> None:
+        if len(self.window_coordinates_points) == 0:
+            self.window_coordinates_points.append(point)
+        elif len(self.window_coordinates_points) == 1:
+            self.window_coordinates_points.append(point)
+            point1 = self.window_coordinates_points[0]
+            point2 = self.window_coordinates_points[1]
+
+            self.x_min = min(point1.x, point2.x)
+            self.x_max = max(point1.x, point2.x)
+            self.y_min = min(point1.y, point2.y)
+            self.y_max = max(point1.y, point2.y)
+
+    def window_coordinates(self):
+        return (self.x_min, self.y_min), (self.x_max, self.y_min), (self.x_max, self.y_max), (self.x_min, self.y_max)
+
+
 class PointSelector:
     def __init__(self, root):
 
@@ -45,6 +82,10 @@ class PointSelector:
         self.y_translation = tk.DoubleVar()
         self.rotation_angle = tk.DoubleVar()
         self.scale_value = tk.DoubleVar()
+
+        # Define initial window variables
+        self.is_defining_window = False
+        self.window: Window = Window()
 
         # Define canvas
         self.canvas = tk.Canvas(root, width=canvas_size, height=canvas_size, bg="white")
@@ -100,12 +141,31 @@ class PointSelector:
         self.apply_circ_bres_btn = tk.Button(root, text="Apply Circ Bres", command=self.apply_circ_bres)
         self.apply_circ_bres_btn.grid(row=7, column=2, columnspan=1)
 
+        # Button to define window
+        self.define_window_button = tk.Button(root, text="Define window", command=self.define_window)
+        self.define_window_button.grid(row=8, column=0, columnspan=2)
+        # Button to clear window
+        self.clear_window_button = tk.Button(root, text="Clear window", command=self.clear_window)
+        self.clear_window_button.grid(row=8, column=1, columnspan=2)
+
         # User interaction with interface
         self.canvas.bind("<Button-1>", self.on_click)
 
     # Handle user click on interface
     def on_click(self, event):
         x, y = event.x, event.y
+
+        # Check if user is defining window
+        if self.is_defining_window:
+            window_point = Point(x, y)
+            if len(self.window.window_coordinates_points) == 0:
+                self.window.define_coordinates(window_point)
+            elif len(self.window.window_coordinates_points) == 1:
+                self.is_defining_window = False
+                self.window.define_coordinates(window_point)
+                self.handle_window_defined()
+
+            return
 
         # Check if canvas is clean
         if len(self.points) >= 2:
@@ -127,8 +187,27 @@ class PointSelector:
             self.points.append(point)
             self.plot_point(point)
 
+    def handle_window_defined(self):
+        for coord in self.window.window_coordinates():
+            self.plot_point(Point(coord[0], coord[1]), "blue")
+        return
+
+    def define_window(self):
+        self.is_defining_window = True
+
+    def clear_window(self):
+        self.is_defining_window = False
+        for coord in self.window.window_coordinates():
+            self.remove_point(Point(coord[0], coord[1]))
+
+        self.window.clear()
+
     def plot_point(self, point: Point, color='red'):
         self.canvas.create_oval(point.x - 5, point.y - 5, point.x + 5, point.y + 5, fill=color)
+
+    def remove_point(self, point: Point):
+        item_id = self.canvas.find_closest(point.x, point.y)[0]
+        self.canvas.delete(item_id)
 
     def has_defined_points(self):
         if len(self.points) >= 2:
