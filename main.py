@@ -151,6 +151,9 @@ class PointSelector:
         # Apply Cohen-Sutherland
         self.apply_cohen_btn = tk.Button(root, text="Apply Cohen-Sutherland", command=self.apply_cohen)
         self.apply_cohen_btn.grid(row=9, column=0, columnspan=1)
+        # Apply Liang-Barsky
+        self.apply_liang_btn = tk.Button(root, text="Apply Liang-Barsky", command=self.apply_liang)
+        self.apply_liang_btn.grid(row=9, column=1, columnspan=1)
 
         # User interaction with interface
         self.canvas.bind("<Button-1>", self.on_click)
@@ -494,7 +497,6 @@ class PointSelector:
                 d = d + 4 * x + 6
             self.plot_circular_point(self.initial_point, x, y)
 
-
     def apply_cohen(self):
         if not self.has_defined_points():
             return
@@ -517,10 +519,10 @@ class PointSelector:
                 code = code + 8
             return code
 
-        def cohen_sutherland_line_clip(point1: Point, point2: Point):
+        def cohen_sutherland_clip(point1: Point, point2: Point):
             c1 = region_code(point1)
             c2 = region_code(point2)
-    
+
             while True:
                 # Both points are inside
                 if not (c1 | c2):
@@ -534,18 +536,18 @@ class PointSelector:
                         outcode_checking = c1
                     else:
                         outcode_checking = c2
-    
+
                     # Find the intersection point
-                    if outcode_checking & 8:        # Top
+                    if outcode_checking & 8:  # Top
                         x = point1.x + (point2.x - point1.x) * (self.window.y_max - point1.y) / (point2.y - point1.y)
                         y = self.window.y_max
-                    elif outcode_checking & 4:      # Bottom
+                    elif outcode_checking & 4:  # Bottom
                         x = point1.x + (point2.x - point1.x) * (self.window.y_min - point1.y) / (point2.y - point1.y)
                         y = self.window.y_min
-                    elif outcode_checking & 2:      # Right
+                    elif outcode_checking & 2:  # Right
                         y = point1.y + (point2.y - point1.y) * (self.window.x_max - point1.x) / (point2.x - point1.x)
                         x = self.window.x_max
-                    else:                           # Left
+                    else:  # Left
                         y = point1.y + (point2.y - point1.y) * (self.window.x_min - point1.x) / (point2.x - point1.x)
                         x = self.window.x_min
 
@@ -561,8 +563,67 @@ class PointSelector:
         print("COHEN SUTHERLAND")
         print(self.window.window_coordinates())
         print("Before")
-        print(self.points[0], self.points[1])
-        res = cohen_sutherland_line_clip(point1=self.initial_point, point2=self.final_point)
+        print(str(self.initial_point), str(self.final_point))
+        res = cohen_sutherland_clip(point1=self.initial_point, point2=self.final_point)
+        print("After")
+        print(res[0], res[1])
+
+        self.clear_canvas()
+        self.draw_window_coordinates()
+
+        if res[0] is not None:
+            self.draw_DDA_line(res[0], res[1])
+
+        print("done")
+
+    def apply_liang(self):
+        if not self.has_defined_points():
+            return
+        if not self.window.has_defined_coordinates():
+            return
+
+        def cliptest(p, q, u1, u2):
+            result = True
+            if p < 0:
+                r = q / p
+                if r > u2:
+                    result = False
+                elif r > u1:
+                    u1 = r
+            elif p > 0:
+                r = q / p
+                if r < u1:
+                    result = False
+                elif r < u2:
+                    u2 = r
+            elif q < 0:
+                result = False
+            return result, u1, u2
+
+        def liang_barsky_line_clip(point1, point2):
+            dx = point2.x - point1.x
+            dy = point2.y - point1.y
+
+            u1, u2 = 0, 1
+
+            p = [-dx, dx, -dy, dy]
+            q = [point1.x - self.window.x_min, self.window.x_max - point1.x, point1.y - self.window.y_min, self.window.y_max - point1.y]
+
+            for i in range(4):
+                ans, u1, u2 = cliptest(p[i], q[i], u1, u2)
+                if not ans:
+                    return None, None
+
+            clipped_p1 = Point(round(point1.x + u1 * dx), round(point1.y + u1 * dy))
+            clipped_p2 = Point(round(point1.x + u2 * dx), round(point1.y + u2 * dy))
+
+            return [clipped_p1, clipped_p2]
+
+        print("LIANG BARSKY")
+        print(self.window.window_coordinates())
+        print("Before")
+        print(str(self.initial_point), str(self.final_point))
+        res = liang_barsky_line_clip(point1=self.initial_point, point2=self.final_point)
         print("After")
         print(res[0], res[1])
 
