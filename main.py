@@ -606,18 +606,26 @@ class PointSelector:
 
             u1, u2 = 0, 1
 
-            p = [-dx, dx, -dy, dy]
-            q = [point1.x - self.window.x_min, self.window.x_max - point1.x, point1.y - self.window.y_min, self.window.y_max - point1.y]
+            ans, u1, u2 = cliptest(-dx, point1.x - self.window.x_min, u1, u2)
+            if ans:
+                ans, u1, u2 = cliptest(dx, self.window.x_max - point1.x, u1, u2)
+                if ans:
+                    ans, u1, u2 = cliptest(-dy, point1.y - self.window.y_min, u1, u2)
+                    if ans:
+                        ans, u1, u2 = cliptest(dy, self.window.y_max - point1.y, u1, u2)
+                        if ans:
+                            new_point1 = Point(point1.x, point1.y)
+                            new_point2 = Point(point2.x, point2.y)
+                            if u2 < 1:
+                                new_point2.x = round(point1.x + u2 * dx)
+                                new_point2.y = round(point1.y + u2 * dy)
+                            if u1 > 0:
+                                new_point1.x = round(point1.x + u1 * dx)
+                                new_point1.y = round(point1.y + u1 * dy)
 
-            for i in range(4):
-                ans, u1, u2 = cliptest(p[i], q[i], u1, u2)
-                if not ans:
-                    return None, None
+                            return new_point1, new_point2
 
-            clipped_p1 = Point(round(point1.x + u1 * dx), round(point1.y + u1 * dy))
-            clipped_p2 = Point(round(point1.x + u2 * dx), round(point1.y + u2 * dy))
-
-            return [clipped_p1, clipped_p2]
+            return None, None
 
         print("LIANG BARSKY")
         print(self.window.window_coordinates())
