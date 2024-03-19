@@ -30,6 +30,14 @@ class Point:
     def x_scale(self, scale):
         self.x *= scale
 
+    def reflect_point_x(self):
+        reflected_point = Point(self.x, canvas_size - self.y)
+        return reflected_point
+
+    def reflect_point_y(self):
+        reflected_point = Point(canvas_size - self.x, self.y)
+        return reflected_point
+
 
 canvas_size = 400
 
@@ -117,19 +125,29 @@ class PointSelector:
         self.apply_rotation_btn = tk.Button(root, text="Apply", command=self.rotate_point)
         self.apply_rotation_btn.grid(row=3, column=2, columnspan=1)
 
+        # Button to reflect x
+        self.reflect_x_btn = tk.Button(root, text="Reflect X", command=self.reflect_x)
+        self.reflect_x_btn.grid(row=4, column=0, columnspan=1)
+        # Button to reflect y
+        self.reflect_y_btn = tk.Button(root, text="Reflect Y", command=self.reflect_y)
+        self.reflect_y_btn.grid(row=4, column=1, columnspan=1)
+        # Button to reflect x y
+        self.reflect_xy_btn = tk.Button(root, text="Reflect XY", command=self.reflect_xy)
+        self.reflect_xy_btn.grid(row=4, column=2, columnspan=1)
+
         # Slider for Scale
-        tk.Label(root, text="Scale").grid(row=4, column=0)
+        tk.Label(root, text="Scale").grid(row=5, column=0)
         self.scale_slider = tk.Scale(root, variable=self.scale_value, from_=-10, to=10, orient=tk.HORIZONTAL)
-        self.scale_slider.grid(row=4, column=1)
+        self.scale_slider.grid(row=5, column=1)
         self.apply_scale_btn = tk.Button(root, text="Apply", command=self.apply_scale)
-        self.apply_scale_btn.grid(row=4, column=2, columnspan=1)
+        self.apply_scale_btn.grid(row=5, column=2, columnspan=1)
 
         # Button to clear the line and preserve initial and final point
-        self.clear_line = tk.Button(root, text="Clear Line", command=self.clear_line)
-        self.clear_line.grid(row=6, column=0, columnspan=2)
+        self.clear_line_btn = tk.Button(root, text="Clear Line", command=self.clear_line)
+        self.clear_line_btn.grid(row=6, column=0, columnspan=2)
         # Button to clear all points
-        self.clear_button = tk.Button(root, text="Clear Canvas", command=self.clear_points)
-        self.clear_button.grid(row=6, column=1, columnspan=2)
+        self.clear_btn = tk.Button(root, text="Clear Canvas", command=self.clear_points)
+        self.clear_btn.grid(row=6, column=1, columnspan=2)
 
         # Apply DDA
         self.apply_dda_btn = tk.Button(root, text="Apply DDA", command=self.apply_DDA)
@@ -137,7 +155,7 @@ class PointSelector:
         # Apply BRESENHAM
         self.apply_bres_btn = tk.Button(root, text="Apply Bres", command=self.apply_bres)
         self.apply_bres_btn.grid(row=7, column=1, columnspan=1)
-        # Apply BRESENHAM
+        # Apply Circ BRESENHAM
         self.apply_circ_bres_btn = tk.Button(root, text="Apply Circ Bres", command=self.apply_circ_bres)
         self.apply_circ_bres_btn.grid(row=7, column=2, columnspan=1)
 
@@ -325,6 +343,36 @@ class PointSelector:
         self.clear_canvas()
         for point in self.points:
             self.plot_point(point)
+
+    def reflect_x(self):
+        if not self.has_defined_points():
+            return
+
+        new_initial_point = self.initial_point.reflect_point_x()
+        new_final_point = self.final_point.reflect_point_x()
+
+        self.clear_canvas()
+        self.draw_DDA_line(new_initial_point, new_final_point)
+
+    def reflect_y(self):
+        if not self.has_defined_points():
+            return
+
+        new_initial_point = self.initial_point.reflect_point_y()
+        new_final_point = self.final_point.reflect_point_y()
+
+        self.clear_canvas()
+        self.draw_DDA_line(new_initial_point, new_final_point)
+
+    def reflect_xy(self):
+        if not self.has_defined_points():
+            return
+
+        new_initial_point = self.initial_point.reflect_point_x()
+        new_final_point = self.final_point.reflect_point_x()
+
+        self.clear_canvas()
+        self.draw_DDA_line(new_initial_point.reflect_point_y(), new_final_point.reflect_point_y())
 
     def apply_scale(self):
         if not self.has_defined_points():
