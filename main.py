@@ -302,20 +302,6 @@ class PointSelector:
             self.print_points()
 
     def rotate_point(self):
-        def translate_to_origin(polygon):
-            centroid_x = sum(vertex.x for vertex in polygon) / len(polygon)
-            centroid_y = sum(vertex.y for vertex in polygon) / len(polygon)
-
-            translated_polygon = [Point(vertex.x - centroid_x, vertex.y - centroid_y) for vertex in polygon]
-
-            return translated_polygon, (centroid_x, centroid_y)
-
-        def rollback_translation(polygon, centroid_val):
-            # Rollback translation
-            rolled_back_polygon = [Point(vertex.x + centroid_val[0], vertex.y + centroid_val[1]) for vertex in polygon]
-
-            return rolled_back_polygon
-
         if not self.has_defined_points():
             return
 
@@ -330,15 +316,9 @@ class PointSelector:
         print(rot_angle_rad)
         self.print_points()
 
-        # Translate to origin
-        new_points, centroid = translate_to_origin(copy.copy(self.points))
-
         # Rotate points
-        for point in new_points:
+        for point in self.points:
             point.rotate(rot_angle_rad)
-
-        # Return to correct position
-        self.points = rollback_translation(new_points, centroid)
 
         self.clear_canvas()
         for point in self.points:
