@@ -28,7 +28,7 @@ class Point:
         self.y = round(self.x * math.sin(angle) + self.y * math.cos(angle))
 
     def x_scale(self, scale):
-        self.x *= scale
+        self.x = round(self.x * scale)
 
     def reflect_point_x(self):
         reflected_point = Point(self.x, canvas_size - self.y)
@@ -363,12 +363,11 @@ class PointSelector:
         self.print_points()
 
         if scale != 0 and scale != 1 and scale != -1:
+            new_final_point = copy.copy(self.final_point)
+            new_final_point.x_scale(scale if scale > 0 else 1 / -scale)
             self.clear_canvas()
-            for point in self.points:
-                point.x_scale(scale if scale > 0 else 1 / -scale)
-                self.plot_point(point)
 
-            self.print_points()
+            self.draw_DDA_line(self.initial_point, new_final_point)
 
     def check_final_point(self):
         if self.final_point.x == self.points[len(self.points) - 1].x:
